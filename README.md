@@ -82,7 +82,7 @@ brew install overmind
 gem install overmind
 ```
 
-You can read about installing on Ruby On Rails [here] (https://github.com/DarthSim/overmind/blob/master/packaging/rubygems/README.md)
+You can read about installing on Ruby On Rails [here](https://github.com/DarthSim/overmind/blob/master/packaging/rubygems/README.md).
 
 ### Download the latest Overmind release binary
 
@@ -252,8 +252,8 @@ $ overmind start -r all
 $ OVERMIND_AUTO_RESTART=all overmind start
 ```
 
-> [!NOTE] 
-> `OVERMIND_CAN_DIE` supersedes `OVERMIND_AUTO_RESTART`; if you want a restarting process, only put it in `OVERMIND_AUTO_RESTART` 
+> [!NOTE]
+> `OVERMIND_CAN_DIE` supersedes `OVERMIND_AUTO_RESTART`; if you want a restarting process, only put it in `OVERMIND_AUTO_RESTART`
 
 #### Specifying the colors
 
