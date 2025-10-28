@@ -67,7 +67,7 @@ func newCommand(h *Handler) (*command, error) {
 		return nil, err
 	}
 
-	instanceID := fmt.Sprintf("overmind-%s-%s", session, nanoid)
+	instanceID := buildInstanceID(session, nanoid)
 
 	c.output = newMultiOutput(pf.MaxNameLength(), h.ShowTimestamps)
 	c.tmux = newTmuxClient(session, instanceID, root, h.TmuxConfigPath, c.output.Offset())
@@ -264,4 +264,44 @@ func (c *command) waitForTimeoutOrStop() {
 
 func sanitizeProcName(name string) string {
 	return disallowedProcNameCharacters.ReplaceAllString(name, "_")
+}
+
+// maxSocketPathLen is a conservative upper bound for a unix socket path. macOS
+// caps sockaddr_un.sun_path at 104 bytes including the NUL terminator (Linux
+// allows 108); using the smaller limit keeps overmind portable.
+const maxSocketPathLen = 103
+
+// buildInstanceID assembles the tmux instance ID (used as both the tmux socket
+// name and the script directory name), truncating the session so the resulting
+// socket path stays within maxSocketPathLen regardless of how long the project
+// or branch name is.
+func buildInstanceID(session, nanoid string) string {
+	prefix := "overmind-"
+	suffix := "-" + nanoid
+
+	// +1 accounts for the path separator between the socket dir and the name.
+	budget := maxSocketPathLen - len(tmuxSocketDir()) - 1 - len(prefix) - len(suffix)
+	if budget < 0 {
+		budget = 0
+	}
+	if len(session) > budget {
+		session = session[:budget]
+	}
+
+	return prefix + session + suffix
+}
+
+// tmuxSocketDir returns the directory tmux uses for its sockets, mirroring
+// tmux's own logic ($TMUX_TMPDIR or /tmp, plus a tmux-<uid> subdirectory).
+// Symlinks are resolved so the length matches the path tmux actually binds
+// (e.g. /tmp is a symlink to /private/tmp on macOS).
+func tmuxSocketDir() string {
+	base := os.Getenv("TMUX_TMPDIR")
+	if base == "" {
+		base = "/tmp"
+	}
+	if resolved, err := filepath.EvalSymlinks(base); err == nil {
+		base = resolved
+	}
+	return fmt.Sprintf("%s/tmux-%d", base, os.Getuid())
 }

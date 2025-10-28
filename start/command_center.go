@@ -41,6 +41,11 @@ func (c *commandCenter) Start() (err error) {
 		return
 	}
 
+	// A graceful shutdown removes the socket via the deferred Stop, but
+	// os.Exit (e.g. when tmux fails to start) skips deferred cleanup, so
+	// register Stop to also run on a fatal exit and avoid orphaning the socket.
+	utils.AddCleanup(c.Stop)
+
 	go func(c *commandCenter) {
 		for {
 			if conn, err := c.listener.Accept(); err == nil {
