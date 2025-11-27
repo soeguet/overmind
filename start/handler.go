@@ -10,6 +10,7 @@ import (
 	"syscall"
 
 	"github.com/DarthSim/overmind/v2/utils"
+	"github.com/Envek/godotenv"
 
 	"github.com/urfave/cli"
 )
@@ -48,6 +49,7 @@ type Handler struct {
 	Daemonize          bool
 	TmuxConfigPath     string
 	Shell              string
+	EnvFiles           string
 }
 
 // AbsRoot returns absolute path to the working directory
@@ -65,6 +67,11 @@ func (h *Handler) AbsRoot() (string, error) {
 
 // Run runs the start command
 func (h *Handler) Run(c *cli.Context) error {
+	// Load env files specified via -e/--env flag
+	if len(h.EnvFiles) > 0 {
+		h.loadEnvFiles(h.EnvFiles)
+	}
+
 	err := h.parseColors(c.String("colors"))
 	utils.FatalOnErr(err)
 
@@ -165,4 +172,19 @@ func (h *Handler) parseStopSignals(signals string) error {
 	}
 
 	return nil
+}
+
+func (h *Handler) loadEnvFiles(envFiles string) {
+	envs := strings.Split(envFiles, ",")
+	for _, e := range envs {
+		e = strings.TrimSpace(e)
+		if len(e) > 0 {
+			err := godotenv.Overload(e)
+			if err != nil {
+				if !os.IsNotExist(err) {
+					fmt.Fprintf(os.Stderr, "overmind: skipping %s due to error: %v\n", e, err)
+				}
+			}
+		}
+	}
 }
