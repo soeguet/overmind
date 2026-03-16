@@ -168,7 +168,12 @@ func setupStatusCmd() cli.Command {
 		Aliases: []string{"ps"},
 		Usage:   "Prints process statuses",
 		Action:  c.Run,
-		Flags:   socketFlags(&c.SocketPath, &c.Network),
+		Flags: append(
+			[]cli.Flag{
+				cli.BoolFlag{Name: "json, j", Usage: "Output in JSON format", Destination: &c.JSON},
+			},
+			socketFlags(&c.SocketPath, &c.Network)...,
+		),
 	}
 }
 

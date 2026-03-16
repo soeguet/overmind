@@ -9,7 +9,10 @@ import (
 	"github.com/urfave/cli"
 )
 
-type cmdStatusHandler struct{ dialer }
+type cmdStatusHandler struct {
+	dialer
+	JSON bool
+}
 
 func (h *cmdStatusHandler) Run(c *cli.Context) error {
 	if c.Args().Present() {
@@ -19,7 +22,11 @@ func (h *cmdStatusHandler) Run(c *cli.Context) error {
 	conn, err := h.Dial()
 	utils.FatalOnErr(err)
 
-	fmt.Fprintln(conn, "status")
+	if h.JSON {
+		fmt.Fprintln(conn, "status-json")
+	} else {
+		fmt.Fprintln(conn, "status")
+	}
 
 	utils.ScanLines(conn, func(b []byte) bool {
 		fmt.Fprintf(os.Stdout, "%s\n", b)
