@@ -130,6 +130,15 @@ func (p *process) Kill(keepAlive bool) {
 	}
 }
 
+func (p *process) Signal(sig syscall.Signal) {
+	if p.Running() {
+		p.output.WriteBoldLinef(p, "Sending signal %v...", sig)
+		if err := p.groupSignal(sig); err != nil {
+			p.output.WriteErr(p, fmt.Errorf("Can't send signal: %s", err))
+		}
+	}
+}
+
 func (p *process) Info() {
 	p.groupSignal(SIGINFO)
 }

@@ -125,6 +125,18 @@ func setupQuitCmd() cli.Command {
 	}
 }
 
+func setupSignalCmd() cli.Command {
+	c := cmdSignalHandler{}
+
+	return cli.Command{
+		Name:      "signal",
+		Usage:     "Send a signal to specified processes (or all if none specified)",
+		Action:    c.Run,
+		ArgsUsage: "<signal> [process name...]",
+		Flags:     socketFlags(&c.SocketPath, &c.Network),
+	}
+}
+
 func setupKillCmd() cli.Command {
 	c := cmdKillHandler{}
 
@@ -192,6 +204,7 @@ func main() {
 		setupStartCmd(),
 		setupRestartCmd(),
 		setupStopCmd(),
+		setupSignalCmd(),
 		setupConnectCmd(),
 		setupQuitCmd(),
 		setupKillCmd(),

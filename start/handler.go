@@ -16,6 +16,7 @@ import (
 
 var signalMap = map[string]syscall.Signal{
 	"ABRT": syscall.SIGABRT,
+	"HUP":  syscall.SIGHUP,
 	"INT":  syscall.SIGINT,
 	"KILL": syscall.SIGKILL,
 	"QUIT": syscall.SIGQUIT,

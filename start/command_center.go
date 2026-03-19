@@ -84,6 +84,8 @@ func (c *commandCenter) handleConnection(conn net.Conn) {
 			c.processRestart(args)
 		case "stop":
 			c.processStop(args)
+		case "signal":
+			c.processSignal(args)
 		case "quit":
 			c.processQuit()
 		case "kill":
@@ -126,6 +128,33 @@ func (c *commandCenter) processStop(args []string) {
 		for _, pattern := range args {
 			if utils.WildcardMatch(pattern, p.Name) {
 				p.Stop(true)
+				break
+			}
+		}
+	}
+}
+
+func (c *commandCenter) processSignal(args []string) {
+	if len(args) == 0 {
+		return
+	}
+
+	sig, ok := signalMap[args[0]]
+	if !ok {
+		return
+	}
+
+	processes := args[1:]
+
+	for _, p := range c.cmd.processes {
+		if len(processes) == 0 {
+			p.Signal(sig)
+			continue
+		}
+
+		for _, pattern := range processes {
+			if utils.WildcardMatch(pattern, p.Name) {
+				p.Signal(sig)
 				break
 			}
 		}
