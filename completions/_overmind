@@ -26,14 +26,16 @@ _overmind_procfile_names() {
 
 _overmind_running_processes() {
   local l
-  local -a reply conn fields procs used=(${(Q)words[2,CURRENT-1]})
+  local -a reply conn header fields procs used=(${(Q)words[2,CURRENT-1]})
   [[ -n ${opt_args[-s]:-$opt_args[--socket]} ]] && conn+=(--socket ${opt_args[-s]:-$opt_args[--socket]})
   [[ -n ${opt_args[-S]:-$opt_args[--network]} ]] && conn+=(--network ${opt_args[-S]:-$opt_args[--network]})
 
-  # skips the header line of the status table
-  for l in ${${(f)"$(_call_program processes $_overmind_bin status $conn 2>/dev/null)"}[2,-1]}; do
+  local -a lines=(${(f)"$(_call_program processes $_overmind_bin status $conn 2>/dev/null)"})
+  header=(${=lines[1]})
+  local pid=${header[(i)PID]} port=${header[(i)PORT]} st=${header[(i)STATUS]}
+  for l in $lines[2,-1]; do
     fields=(${=l})
-    (( $used[(Ie)$fields[1]] )) || procs+=("$fields[1]:$fields[3], pid $fields[2]")
+    (( $used[(Ie)$fields[1]] )) || procs+=("$fields[1]:$fields[st], pid $fields[pid]${fields[port]:+, port $fields[port]}")
   done
 
   if (( ! $#procs )) && _overmind_procfile_names; then
@@ -138,8 +140,13 @@ _overmind() {
         '1: :_overmind_running_processes' \
         && ret=0
       ;;
-    (quit|q|kill|k|echo|status|ps)
+    (quit|q|kill|k|echo)
       _arguments -S $help_flag $socket_flags && ret=0
+      ;;
+    (status|ps)
+      _arguments -S $help_flag $socket_flags \
+        '(-j --json)'{-j,--json}'[output in json format]' \
+        && ret=0
       ;;
     (run|exec|e)
       _arguments '*:: :_normal' && ret=0

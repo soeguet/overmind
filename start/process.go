@@ -36,9 +36,10 @@ type process struct {
 	Name    string
 	Color   int
 	Command string
+	Port    int
 }
 
-func newProcess(tmux *tmuxClient, name string, color int, command string, output *multiOutput, canDie bool, autoRestart bool, stopSignal syscall.Signal) *process {
+func newProcess(tmux *tmuxClient, name string, color int, command string, output *multiOutput, canDie bool, autoRestart bool, stopSignal syscall.Signal, port int) *process {
 	out, in := io.Pipe()
 
 	proc := &process{
@@ -56,6 +57,7 @@ func newProcess(tmux *tmuxClient, name string, color int, command string, output
 		Name:    name,
 		Color:   color,
 		Command: command,
+		Port:    port,
 	}
 
 	tmux.AddProcess(proc)

@@ -1,6 +1,7 @@
 package start
 
 import (
+	"encoding/json"
 	"fmt"
 	"net"
 	"regexp"
@@ -101,6 +102,8 @@ func (c *commandCenter) handleConnection(conn net.Conn) {
 			c.processEcho(conn)
 		case "status":
 			c.processStatus(conn)
+		case "status-json":
+			c.processStatusJSON(conn)
 		}
 
 		return true
@@ -203,6 +206,13 @@ func (c *commandCenter) processEcho(conn net.Conn) {
 	c.cmd.output.Echo(conn)
 }
 
+func processStatusString(p *process) string {
+	if p.dead || p.keepingAlive {
+		return "dead"
+	}
+	return "running"
+}
+
 func (c *commandCenter) processStatus(conn net.Conn) {
 	maxNameLen := 9
 	for _, p := range c.cmd.processes {
@@ -215,20 +225,37 @@ func (c *commandCenter) processStatus(conn net.Conn) {
 	for i := maxNameLen - len(headerProcess); i > -1; i-- {
 		conn.Write([]byte{' '})
 	}
-
+	fmt.Fprint(conn, "PORT      ")
 	fmt.Fprint(conn, headerPid)
 	fmt.Fprint(conn, "       ")
 	fmt.Fprintln(conn, headerStatus)
 
 	for _, p := range c.cmd.processes {
 		utils.FprintRpad(conn, p.Name, maxNameLen+1)
+		utils.FprintRpad(conn, strconv.Itoa(p.Port), 10)
 		utils.FprintRpad(conn, strconv.Itoa(p.pid), 10)
-
-		if p.dead || p.keepingAlive {
-			fmt.Fprintln(conn, "dead")
-		} else {
-			fmt.Fprintln(conn, "running")
-		}
+		fmt.Fprintln(conn, processStatusString(p))
 	}
+	conn.Close()
+}
+
+type processStatusEntry struct {
+	Name   string `json:"name"`
+	Port   int    `json:"port"`
+	PID    int    `json:"pid"`
+	Status string `json:"status"`
+}
+
+func (c *commandCenter) processStatusJSON(conn net.Conn) {
+	entries := make([]processStatusEntry, 0, len(c.cmd.processes))
+	for _, p := range c.cmd.processes {
+		entries = append(entries, processStatusEntry{
+			Name:   p.Name,
+			Port:   p.Port,
+			PID:    p.pid,
+			Status: processStatusString(p),
+		})
+	}
+	json.NewEncoder(conn).Encode(entries)
 	conn.Close()
 }
