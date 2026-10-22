@@ -36,7 +36,7 @@ module Overmind
 
     # Checks if tmux is installed either globally or as a prebuilt binary
     def tmux_installed?
-      system("which tmux") || File.exist?(TMUX_PATH)
+      system("which tmux", out: IO::NULL) || File.exist?(TMUX_PATH)
     end
 
     # Checks if the Overmind executable is present
