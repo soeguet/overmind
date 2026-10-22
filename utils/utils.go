@@ -15,6 +15,16 @@ import (
 var badTitleCharsRe = regexp.MustCompile(`[^a-zA-Z0-9]`)
 var dashesRe = regexp.MustCompile(`-{2,}`)
 
+// cleanupFns are run, in registration order, right before Fatal exits the
+// process. They exist because os.Exit skips deferred cleanup, which would
+// otherwise orphan resources such as the command-center socket file.
+var cleanupFns []func()
+
+// AddCleanup registers fn to run before the process exits via Fatal.
+func AddCleanup(fn func()) {
+	cleanupFns = append(cleanupFns, fn)
+}
+
 // FatalOnErr prints error and exits if errir is not nil
 func FatalOnErr(err error) {
 	if err != nil {
@@ -24,6 +34,10 @@ func FatalOnErr(err error) {
 
 // Fatal prints error and exits if errir
 func Fatal(i ...interface{}) {
+	for _, fn := range cleanupFns {
+		fn()
+	}
+
 	fmt.Fprint(os.Stderr, "overmind: ")
 	fmt.Fprintln(os.Stderr, i...)
 	os.Exit(1)
