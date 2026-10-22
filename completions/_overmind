@@ -122,18 +122,18 @@ _overmind() {
         && ret=0
       ;;
     (restart|r|stop|interrupt|i)
-      _arguments -S -A '-*' $help_flag $socket_flags \
+      _arguments -S $help_flag $socket_flags \
         '*: :_overmind_running_processes' \
         && ret=0
       ;;
     (signal)
-      _arguments -S -A '-*' $help_flag $socket_flags \
+      _arguments -S $help_flag $socket_flags \
         '1:signal:(ABRT HUP INT KILL QUIT STOP TERM USR1 USR2)' \
         '*: :_overmind_running_processes' \
         && ret=0
       ;;
     (connect|c)
-      _arguments -S -A '-*' $help_flag $socket_flags \
+      _arguments -S $help_flag $socket_flags \
         '(-c --control-mode)'{-c,--control-mode}'[connect in tmux control mode]' \
         '1: :_overmind_running_processes' \
         && ret=0
