@@ -172,9 +172,32 @@ func setupStatusCmd() cli.Command {
 	}
 }
 
-func main() {
-	loadEnvFiles()
+func setupCompletionCmd() cli.Command {
+	c := cmdCompletionHandler{}
 
+	return cli.Command{
+		Name:      "completion",
+		Usage:     "Prints the shell completion script",
+		Action:    c.Run,
+		ArgsUsage: "zsh",
+	}
+}
+
+func setupProcfileNamesCmd() cli.Command {
+	c := cmdProcfileNamesHandler{}
+
+	return cli.Command{
+		Name:   "procfile-names",
+		Usage:  "Prints process names from the procfile",
+		Action: c.Run,
+		Hidden: true,
+		Flags: []cli.Flag{
+			cli.StringFlag{Name: "procfile, f", EnvVar: "OVERMIND_PROCFILE", Usage: "Specify a Procfile to load", Value: "./Procfile", Destination: &c.Procfile},
+		},
+	}
+}
+
+func newApp() *cli.App {
 	app := cli.NewApp()
 
 	app.Name = "Overmind"
@@ -198,9 +221,17 @@ func main() {
 		setupRunCmd(),
 		setupEchoCmd(),
 		setupStatusCmd(),
+		setupCompletionCmd(),
+		setupProcfileNamesCmd(),
 	}
 
-	app.Run(os.Args)
+	return app
+}
+
+func main() {
+	loadEnvFiles()
+
+	newApp().Run(os.Args)
 }
 
 func loadEnvFiles() {

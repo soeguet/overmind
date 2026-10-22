@@ -100,6 +100,22 @@ The Overmind binary will be installed to `$(go env GOPATH)/bin`. Make sure that 
 
 **Note:** You can update Overmind the same way.
 
+### Shell completion
+
+Overmind completes commands, flags and process names in zsh. Process names come from the running instance, or from the Procfile if none is running.
+
+Put the script into a directory from your `$fpath`:
+
+```bash
+$ overmind completion zsh > "${fpath[1]}/_overmind"
+```
+
+Or source it in `~/.zshrc` after `compinit`:
+
+```bash
+source <(overmind completion zsh)
+```
+
 ## Usage
 
 **In short:** You can get help by running `overmind -h` and `overmind help [command]`.

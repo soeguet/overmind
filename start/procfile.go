@@ -98,3 +98,15 @@ func (p procfile) MaxNameLength() (nl int) {
 	}
 	return
 }
+
+// ProcfileNames returns the process names defined in the procfile
+func ProcfileNames(procfile string) []string {
+	pf := parseProcfile(procfile, 0, 0, nil, 0, nil)
+
+	names := make([]string, len(pf))
+	for i, e := range pf {
+		names[i] = e.Name
+	}
+
+	return names
+}

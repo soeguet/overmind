@@ -1,0 +1,155 @@
+#compdef overmind
+
+_overmind_commands() {
+  local -a commands=(
+    'start:run procfile'
+    'restart:restart specified processes'
+    'stop:stop specified processes without quitting overmind itself'
+    'connect:connect to the tmux session of the specified process'
+    'quit:gracefully quit overmind'
+    'kill:kill all processes'
+    'run:run a command within the overmind environment'
+    'echo:echo output from master overmind instance'
+    'status:print process statuses'
+    'completion:print the shell completion script'
+    'help:show help for a command'
+  )
+  _describe -t commands 'overmind command' commands
+}
+
+_overmind_procfile_names() {
+  local procfile=${opt_args[-f]:-$opt_args[--procfile]}
+  reply=(${(f)"$(_call_program procfile $_overmind_bin procfile-names ${procfile:+--procfile $procfile} 2>/dev/null)"})
+  (( $#reply ))
+}
+
+_overmind_running_processes() {
+  local l
+  local -a reply conn fields procs used=(${(Q)words[2,CURRENT-1]})
+  [[ -n ${opt_args[-s]:-$opt_args[--socket]} ]] && conn+=(--socket ${opt_args[-s]:-$opt_args[--socket]})
+  [[ -n ${opt_args[-S]:-$opt_args[--network]} ]] && conn+=(--network ${opt_args[-S]:-$opt_args[--network]})
+
+  # skips the header line of the status table
+  for l in ${${(f)"$(_call_program processes $_overmind_bin status $conn 2>/dev/null)"}[2,-1]}; do
+    fields=(${=l})
+    (( $used[(Ie)$fields[1]] )) || procs+=("$fields[1]:$fields[3], pid $fields[2]")
+  done
+
+  if (( ! $#procs )) && _overmind_procfile_names; then
+    for l in $reply; do
+      (( $used[(Ie)$l] )) || procs+=("$l:not running")
+    done
+  fi
+
+  _describe -t processes process procs
+}
+
+_overmind_process_list() {
+  local -a reply
+  if ! _overmind_procfile_names; then
+    _message -e processes 'process names, divided with comma'
+    return 1
+  fi
+  (( $@[(Ie)--with-all] )) && reply+=('all[all processes]')
+  _values -s , processes $reply
+}
+
+_overmind_formation() {
+  local -a reply
+  _overmind_procfile_names
+  _values -s , formation ${^reply}':count:' 'all[all processes]:count:'
+}
+
+_overmind_stop_signals() {
+  local -a reply
+  if ! _overmind_procfile_names; then
+    _message -e signals 'process=signal, divided with comma'
+    return 1
+  fi
+  _values -s , 'stop signal' ${^reply}':signal:(ABRT INT KILL QUIT STOP TERM USR1 USR2)'
+}
+
+_overmind_shells() {
+  local -a shells
+  [[ -r /etc/shells ]] && shells=(${${${(f)"$(</etc/shells)"}:#\#*}:t})
+  _wanted shells expl shell compadd -- sh ${(u)shells}
+}
+
+_overmind() {
+  local curcontext=$curcontext state state_descr line ret=1
+  local _overmind_bin=$words[1]
+  typeset -A opt_args
+
+  local -a help_flag=('(- *)'{-h,--help}'[show help]')
+  local -a socket_flags=(
+    '(-s --socket)'{-s,--socket=}'[path to overmind socket or address to bind]:socket:_files'
+    '(-S --network)'{-S,--network=}'[network to use for commands]:network:(tcp tcp4 tcp6 unix)'
+  )
+
+  _arguments -C \
+    '(- *)'{-h,--help}'[show help]' \
+    '(- *)'{-v,--version}'[print the version]' \
+    '1: :_overmind_commands' \
+    '*:: :->args' && ret=0
+
+  [[ $state == args ]] || return ret
+  curcontext=${curcontext%:*:*}:overmind-$words[1]:
+
+  case $words[1] in
+    (start|s)
+      _arguments -S $help_flag $socket_flags \
+        '(-w --title)'{-w,--title=}'[title of the application]:title' \
+        '(-f --procfile)'{-f,--procfile=}'[procfile to load]:procfile:_files' \
+        '(-l --processes)'{-l,--processes=}'[process names to launch]:processes:_overmind_process_list' \
+        '(-d --root)'{-d,--root=}'[working directory of application]:directory:_directories' \
+        '(-t --timeout)'{-t,--timeout=}'[seconds processes have to shut down gracefully]:seconds' \
+        '(-p --port)'{-p,--port=}'[port to use as the base]:port' \
+        '(-P --port-step)'{-P,--port-step=}'[step to increase port number]:step' \
+        '(-N --no-port)'{-N,--no-port}'[do not set $PORT for processes]' \
+        '(-c --can-die)'{-c,--can-die=}'[processes which can die without interrupting the others]:processes:_overmind_process_list' \
+        '--any-can-die[no dead process stops overmind]' \
+        '(-r --auto-restart)'{-r,--auto-restart=}'[processes to auto restart on death]:processes:_overmind_process_list --with-all' \
+        '(-b --colors)'{-b,--colors=}'[xterm color codes for process names, divided with comma]:colors' \
+        '(-T --show-timestamps)'{-T,--show-timestamps}'[add timestamps to the output]' \
+        '(-m --formation)'{-m,--formation=}'[number of each process type to run]:formation:_overmind_formation' \
+        '--formation-port-step=[step to increase port number for the next instance of a process]:step' \
+        '(-i --stop-signals)'{-i,--stop-signals=}'[signal sent to each process on stop]:signals:_overmind_stop_signals' \
+        '(-D --daemonize)'{-D,--daemonize}'[launch overmind as a daemon]' \
+        '(-F --tmux-config)'{-F,--tmux-config=}'[alternative tmux config]:tmux config:_files' \
+        '(-x --ignored-processes)'{-x,--ignored-processes=}'[process names to prevent from launching]:processes:_overmind_process_list' \
+        '(-H --shell)'{-H,--shell=}'[shell to run processes with]:shell:_overmind_shells' \
+        && ret=0
+      ;;
+    (restart|r|stop|interrupt|i)
+      _arguments -S -A '-*' $help_flag $socket_flags \
+        '*: :_overmind_running_processes' \
+        && ret=0
+      ;;
+    (connect|c)
+      _arguments -S -A '-*' $help_flag $socket_flags \
+        '(-c --control-mode)'{-c,--control-mode}'[connect in tmux control mode]' \
+        '1: :_overmind_running_processes' \
+        && ret=0
+      ;;
+    (quit|q|kill|k|echo|status|ps)
+      _arguments -S $help_flag $socket_flags && ret=0
+      ;;
+    (run|exec|e)
+      _arguments '*:: :_normal' && ret=0
+      ;;
+    (completion)
+      _arguments $help_flag '1:shell:(zsh)' && ret=0
+      ;;
+    (help|h)
+      _arguments '1: :_overmind_commands' && ret=0
+      ;;
+  esac
+
+  return ret
+}
+
+if [[ $funcstack[1] == _overmind ]]; then
+  _overmind "$@"
+else
+  compdef _overmind overmind
+fi
