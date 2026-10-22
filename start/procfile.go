@@ -9,7 +9,7 @@ import (
 	"github.com/DarthSim/overmind/v2/utils"
 )
 
-var procfileRe = regexp.MustCompile(`^([\w-]+):\s+(.+)$`)
+var procfileRe = regexp.MustCompile(`^([\w-]+):\s*(.+)$`)
 
 type procfileEntry struct {
 	Name       string
