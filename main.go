@@ -63,6 +63,7 @@ func setupStartCmd() cli.Command {
 				cli.StringFlag{Name: "tmux-config, F", EnvVar: "OVERMIND_TMUX_CONFIG", Usage: "Specify an alternative tmux config path to be used by Overmind", Destination: &c.TmuxConfigPath},
 				cli.StringFlag{Name: "ignored-processes, x", EnvVar: "OVERMIND_IGNORED_PROCESSES", Usage: "Specify process names to prevent from launching. Useful if you want to run all but one or two processes. Divide names with comma. Takes precedence over the 'processes' flag.", Destination: &c.IgnoredProcNames},
 				cli.StringFlag{Name: "shell, H", EnvVar: "OVERMIND_SHELL", Usage: "Specify shell to run processes with.", Value: "sh", Destination: &c.Shell},
+				cli.StringFlag{Name: "env, e", Usage: "Environment file[,file] to load. Can specify multiple files separated by comma", Destination: &c.EnvFiles},
 			},
 			socketFlags(&c.SocketPath, &c.Network)...,
 		),

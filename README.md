@@ -388,12 +388,19 @@ You can specify additional env files to load with `OVERMIND_ENV` variable:
 $ OVERMIND_ENV=./.env.local,./.env.development overmind s
 ```
 
+Or with the `-e` flag of `overmind start`. These files are loaded last and only affect the processes, not the Overmind options:
+
+```bash
+$ overmind s -e ./.env.local,./.env.development
+```
+
 The files will be loaded in the following order:
 
 * `~/.overmind.env`
 * `./.overmind.env`
 * `./.env`
 * `$OVERMIND_ENV`
+* `-e` / `--env`
 
 You can also opt to skip loading the `.env` file entirely (`.overmind.env` will still be read) by setting the variable `OVERMIND_SKIP_ENV`.
 

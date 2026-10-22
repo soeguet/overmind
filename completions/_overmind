@@ -120,6 +120,7 @@ _overmind() {
         '(-D --daemonize)'{-D,--daemonize}'[launch overmind as a daemon]' \
         '(-F --tmux-config)'{-F,--tmux-config=}'[alternative tmux config]:tmux config:_files' \
         '(-x --ignored-processes)'{-x,--ignored-processes=}'[process names to prevent from launching]:processes:_overmind_process_list' \
+        '(-e --env)'{-e,--env=}'[env files to load, divided with comma]:env files:_sequence _files' \
         '(-H --shell)'{-H,--shell=}'[shell to run processes with]:shell:_overmind_shells' \
         && ret=0
       ;;
