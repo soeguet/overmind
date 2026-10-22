@@ -351,6 +351,17 @@ $ overmind stop 'sidekiq*'
 
 When the command is called without any arguments, it will stop all the processes without stopping Overmind itself.
 
+### Sending a signal to a process
+
+You can send a signal to processes, e.g. to make them reload their config:
+
+```bash
+$ overmind signal HUP web
+$ overmind signal USR1 'sidekiq*'
+```
+
+When no process is specified, the signal is sent to all processes. Supported signals are: ABRT, HUP, INT, KILL, QUIT, STOP, TERM, USR1, USR2.
+
 ### Killing processes
 
 If something goes wrong, you can kill all running processes:

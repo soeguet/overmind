@@ -5,6 +5,7 @@ _overmind_commands() {
     'start:run procfile'
     'restart:restart specified processes'
     'stop:stop specified processes without quitting overmind itself'
+    'signal:send a signal to specified processes'
     'connect:connect to the tmux session of the specified process'
     'quit:gracefully quit overmind'
     'kill:kill all processes'
@@ -66,7 +67,7 @@ _overmind_stop_signals() {
     _message -e signals 'process=signal, divided with comma'
     return 1
   fi
-  _values -s , 'stop signal' ${^reply}':signal:(ABRT INT KILL QUIT STOP TERM USR1 USR2)'
+  _values -s , 'stop signal' ${^reply}':signal:(ABRT HUP INT KILL QUIT STOP TERM USR1 USR2)'
 }
 
 _overmind_shells() {
@@ -122,6 +123,12 @@ _overmind() {
       ;;
     (restart|r|stop|interrupt|i)
       _arguments -S -A '-*' $help_flag $socket_flags \
+        '*: :_overmind_running_processes' \
+        && ret=0
+      ;;
+    (signal)
+      _arguments -S -A '-*' $help_flag $socket_flags \
+        '1:signal:(ABRT HUP INT KILL QUIT STOP TERM USR1 USR2)' \
         '*: :_overmind_running_processes' \
         && ret=0
       ;;
