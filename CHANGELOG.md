@@ -14,6 +14,7 @@ Fork of [DarthSim/overmind](https://github.com/DarthSim/overmind), branched off 
 
 ### Changed
 - `overmind status` has a new PORT column between PROCESS and PID (upstream #214)
+- `remain-on-exit` only on overmind panes, own windows close on exit again; needs tmux 3.0+ (upstream #135)
 
 ### Fixed
 - procfile entries without space after the colon, e.g. `web:rails s` (upstream #220)
